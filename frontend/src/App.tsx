@@ -10,6 +10,9 @@ import Users from './pages/Users'
 import Agents from './pages/Agents'
 import Landing from './pages/Landing'
 import ClientPortal from './pages/ClientPortal'
+import History from './pages/History'
+import Profile from './pages/Profile'
+import Settings from './pages/Settings'
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -47,6 +50,9 @@ function App() {
         <Route path="agents" element={<Agents />} />
         <Route path="users" element={<Users />} />
         <Route path="scoring" element={<Scoring />} />
+        <Route path="history" element={<History />} />
+        <Route path="profile" element={<Profile />} />
+        <Route path="settings" element={<Settings />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

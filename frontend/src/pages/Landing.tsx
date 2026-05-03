@@ -20,10 +20,8 @@ const Landing = () => {
       <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary-600 rounded-xl">
-              <Shield className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-xl font-display font-bold text-slate-900">Scoring GN</span>
+            <img src="/logo.png" alt="Logo Scoring Guinée" className="w-12 h-12 object-contain" />
+            <span className="text-xl font-display font-bold text-slate-900">Scoring-Guinée</span>
           </div>
           
           <div className="hidden md:flex items-center gap-8">
@@ -54,13 +52,16 @@ const Landing = () => {
             L'inclusion financière au service de la Guinée
           </div>
           <h1 className="text-5xl md:text-7xl font-display font-extrabold text-slate-900 mb-8 leading-tight tracking-tight">
-            Scoring Intelligent pour <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-guinee-green">les Micro-Entrepreneurs</span>
+            L'Inclusion Financière <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-guinee-green to-primary-600">par l'Intelligence Artificielle</span>
           </h1>
           <p className="text-xl text-slate-500 max-w-3xl mx-auto mb-12 leading-relaxed">
-            Propulsez la croissance économique en Guinée. Notre algorithme IA transforme les données Mobile Money 
-            en opportunités de crédit pour les commerçants, agriculteurs et artisans.
+            <strong>Scoring-Guinée</strong> transforme vos transactions quotidiennes (Orange Money, MTN MoMo) en un score de crédit fiable. 
+            Nous permettons aux micro-entrepreneurs d'accéder au financement sans garanties traditionnelles.
           </p>
+          <div className="flex flex-col items-center gap-2 mb-12">
+            <p className="text-guinee-green font-semibold italic text-lg">"Votre confiance, notre engagement, votre avenir."</p>
+          </div>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link to="/login" className="w-full sm:w-auto px-10 py-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/10 flex items-center justify-center gap-2">
               Découvrir la Plateforme
@@ -214,8 +215,8 @@ const Landing = () => {
       <footer className="bg-slate-900 text-white py-20 px-4">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8 text-center md:text-left">
           <div className="flex items-center gap-3">
-            <Shield className="w-8 h-8 text-primary-500" />
-            <span className="text-2xl font-display font-bold">Scoring GN</span>
+            <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain" />
+            <span className="text-2xl font-display font-bold">Scoring-Guinée</span>
           </div>
           <p className="text-slate-400 text-sm">© 2024 République de Guinée - Plateforme d'Inclusion Financière</p>
           <div className="flex gap-6">

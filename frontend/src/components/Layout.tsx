@@ -9,7 +9,10 @@ import {
   Shield,
   Menu,
   X,
-  User as UserIcon
+  User as UserIcon,
+  History,
+  Settings,
+  UserCircle
 } from 'lucide-react'
 import { useState } from 'react'
 import { clsx } from 'clsx'
@@ -30,18 +33,19 @@ const Layout = () => {
     { name: 'Agents', href: '/app/agents', icon: Contact, roles: ['admin'] },
     { name: 'Scoring', href: '/app/scoring', icon: Zap, roles: ['admin', 'agent'] },
     { name: 'Utilisateurs', href: '/app/users', icon: Shield, roles: ['admin'] },
+    { name: 'Historique', href: '/app/history', icon: History, roles: ['admin', 'agent'] },
+    { name: 'Profil', href: '/app/profile', icon: UserCircle, roles: ['admin', 'agent', 'client'] },
+    { name: 'Paramètres', href: '/app/settings', icon: Settings, roles: ['admin'] },
   ].filter(item => item.roles.includes(user?.role || ''))
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
       {/* Sidebar Desktop */}
-      <aside className="hidden lg:flex w-64 flex-col bg-white border-r border-slate-200">
+      <aside className="hidden lg:flex w-64 flex-col bg-slate-900 border-r border-slate-800">
         <div className="p-6">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary-600 rounded-lg shadow-sm">
-              <Shield className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-display font-bold text-slate-900">Scoring GN</span>
+            <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain" />
+            <span className="font-display font-bold text-white">Scoring-Guinée</span>
           </div>
         </div>
 
@@ -53,29 +57,33 @@ const Layout = () => {
               className={({ isActive }) => clsx(
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
                 isActive 
-                  ? 'bg-primary-50 text-primary-700' 
-                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/20' 
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-white'
               )}
             >
-              <item.icon className="w-5 h-5" />
-              {item.name}
+              {({ isActive }) => (
+                <>
+                  <item.icon className={clsx("w-5 h-5", isActive ? "text-white" : "text-slate-500")} />
+                  {item.name}
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
 
-        <div className="p-4 border-t border-slate-100">
-          <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-slate-50 mb-4">
-            <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700">
+        <div className="p-4 border-t border-slate-800">
+          <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-slate-800/50 mb-4">
+            <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white">
               <UserIcon className="w-4 h-4" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-slate-900 truncate">{user?.full_name}</p>
-              <p className="text-xs text-slate-500 capitalize">{user?.role}</p>
+              <p className="text-sm font-semibold text-white truncate">{user?.full_name}</p>
+              <p className="text-xs text-slate-400 capitalize">{user?.role}</p>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+            className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-400 hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-all"
           >
             <LogOut className="w-5 h-5" />
             Déconnexion
@@ -88,8 +96,8 @@ const Layout = () => {
         {/* Header Mobile */}
         <header className="lg:hidden bg-white border-b border-slate-200 h-16 flex items-center justify-between px-4 z-20">
           <div className="flex items-center gap-3">
-            <Shield className="w-6 h-6 text-primary-600" />
-            <span className="font-display font-bold text-slate-900">Scoring GN</span>
+            <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain" />
+            <span className="font-display font-bold text-slate-900">Scoring-Guinée</span>
           </div>
           <button 
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -111,8 +119,8 @@ const Layout = () => {
         )}>
            <div className="p-6 border-b border-slate-100">
             <div className="flex items-center gap-3">
-              <Shield className="w-6 h-6 text-primary-600" />
-              <span className="font-display font-bold text-slate-900">Scoring GN</span>
+              <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain" />
+              <span className="font-display font-bold text-slate-900">Scoring-Guinée</span>
             </div>
           </div>
           <nav className="p-4 space-y-1">

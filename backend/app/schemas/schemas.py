@@ -230,6 +230,29 @@ class ScoringResponse(BaseModel):
     interpretation: str                   # texte explicatif en français
 
 
+class ScoreHistoryResponse(BaseModel):
+    id: int
+    client_id: int
+    client_name: Optional[str] = None
+    agent_id: Optional[int] = None
+    agent_name: Optional[str] = None
+    score: float
+    probabilite_defaut: float
+    decision: DecisionCreditSchema
+    montant_recommande_gnf: Optional[float]
+    model_version: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SystemSettingsSchema(BaseModel):
+    approval_threshold: float = 65.0
+    model_version: str = "v1.0.2"
+    maintenance_mode: bool = False
+    max_loan_amount_gnf: float = 50000000.0
+
+
 # ─── Dashboard stats ──────────────────────────────────────────────────────────
 class DashboardStats(BaseModel):
     total_clients: int

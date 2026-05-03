@@ -9,7 +9,12 @@ import {
   Check,
   MoreVertical,
   ShieldAlert,
-  Building
+  Building,
+  Phone,
+  Calendar,
+  Clock,
+  Trash2,
+  Eye
 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import { toast } from 'react-hot-toast'
@@ -30,6 +35,8 @@ type UserFormValues = z.infer<typeof userSchema>
 
 const Users = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<any>(null)
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const token = useAuthStore(state => state.token)
   const queryClient = useQueryClient()
 
@@ -78,6 +85,25 @@ const Users = () => {
       toast.error(error.message)
     }
   })
+  
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/v1/users/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (!res.ok) throw new Error('Erreur lors de la suppression')
+      return true
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+      toast.success('Utilisateur supprimé')
+      setIsDetailModalOpen(false)
+    },
+    onError: (error: any) => {
+      toast.error(error.message)
+    }
+  })
 
   if (isLoading) return <div className="animate-pulse h-64 bg-white rounded-xl" />
 
@@ -114,12 +140,20 @@ const Users = () => {
             </div>
             
             <h3 className="font-bold text-slate-900 text-lg truncate">{u.full_name}</h3>
-            <p className="text-sm text-slate-500 flex items-center gap-2 mb-4">
-              <Mail className="w-4 h-4" />
-              {u.email}
-            </p>
+            <div className="space-y-1 mb-4">
+              <p className="text-sm text-slate-500 flex items-center gap-2">
+                <Mail className="w-4 h-4" />
+                {u.email || 'Pas d\'email'}
+              </p>
+              {u.telephone && (
+                <p className="text-sm text-slate-500 flex items-center gap-2">
+                  <Phone className="w-4 h-4" />
+                  {u.telephone}
+                </p>
+              )}
+            </div>
 
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+            <div className="pt-4 border-t border-slate-100 flex items-center justify-between mb-4">
               <div className="flex items-center gap-1.5 text-xs text-slate-400">
                 <Building className="w-3.5 h-3.5" />
                 {u.institution || 'Non spécifié'}
@@ -134,9 +168,101 @@ const Users = () => {
                 </span>
               )}
             </div>
+
+            <button 
+              onClick={() => {
+                setSelectedUser(u)
+                setIsDetailModalOpen(true)
+              }}
+              className="w-full py-2 bg-slate-50 text-slate-600 rounded-xl text-sm font-semibold hover:bg-primary-50 hover:text-primary-700 transition-colors flex items-center justify-center gap-2"
+            >
+              <Eye className="w-4 h-4" />
+              Voir les informations
+            </button>
           </div>
         ))}
       </div>
+
+      {/* Modal Détails Utilisateur */}
+      {isDetailModalOpen && selectedUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-slate-900">Informations Utilisateur</h2>
+              <button onClick={() => setIsDetailModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full">
+                <X className="w-6 h-6 text-slate-400" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-2xl bg-primary-100 flex items-center justify-center text-primary-700">
+                  {selectedUser.role === 'admin' ? <ShieldAlert className="w-8 h-8" /> : <UserIcon className="w-8 h-8" />}
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900">{selectedUser.full_name}</h3>
+                  <p className="text-slate-500 capitalize">{selectedUser.role}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 rounded-xl bg-slate-50">
+                  <p className="text-xs text-slate-400 uppercase font-bold mb-1">Email</p>
+                  <p className="text-sm font-medium text-slate-900 break-all">{selectedUser.email || 'Non renseigné'}</p>
+                </div>
+                <div className="p-4 rounded-xl bg-slate-50">
+                  <p className="text-xs text-slate-400 uppercase font-bold mb-1">Téléphone</p>
+                  <p className="text-sm font-medium text-slate-900">{selectedUser.telephone || 'Non renseigné'}</p>
+                </div>
+                <div className="p-4 rounded-xl bg-slate-50">
+                  <p className="text-xs text-slate-400 uppercase font-bold mb-1">Institution</p>
+                  <p className="text-sm font-medium text-slate-900">{selectedUser.institution || 'Non spécifié'}</p>
+                </div>
+                <div className="p-4 rounded-xl bg-slate-50">
+                  <p className="text-xs text-slate-400 uppercase font-bold mb-1">Statut</p>
+                  <p className="text-sm font-medium text-slate-900">{selectedUser.is_active ? 'Actif' : 'Inactif'}</p>
+                </div>
+                <div className="p-4 rounded-xl bg-slate-50">
+                  <p className="text-xs text-slate-400 uppercase font-bold mb-1 flex items-center gap-1">
+                    <Calendar className="w-3 h-3" /> Créé le
+                  </p>
+                  <p className="text-sm font-medium text-slate-900">
+                    {new Date(selectedUser.created_at).toLocaleDateString('fr-FR')}
+                  </p>
+                </div>
+                <div className="p-4 rounded-xl bg-slate-50">
+                  <p className="text-xs text-slate-400 uppercase font-bold mb-1 flex items-center gap-1">
+                    <Clock className="w-3 h-3" /> Dernier accès
+                  </p>
+                  <p className="text-sm font-medium text-slate-900">
+                    {selectedUser.last_login ? new Date(selectedUser.last_login).toLocaleString('fr-FR') : 'Jamais'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <button 
+                  onClick={() => {
+                    if (window.confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.')) {
+                      deleteMutation.mutate(selectedUser.id)
+                    }
+                  }}
+                  className="flex-1 px-4 py-3 border border-red-200 rounded-xl text-sm font-semibold text-red-600 hover:bg-red-50 flex items-center justify-center gap-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Supprimer le compte
+                </button>
+                <button 
+                  onClick={() => setIsDetailModalOpen(false)}
+                  className="flex-1 btn-primary py-3"
+                >
+                  Fermer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal Nouvel Utilisateur */}
       {isModalOpen && (

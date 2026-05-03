@@ -15,7 +15,8 @@ from app.schemas.schemas import (
     UserCreate, UserUpdate, UserResponse,
     ClientCreate, ClientUpdate, ClientResponse,
     ScoringRequest, ScoringResponse,
-    DashboardStats, PaginatedResponse
+    DashboardStats, PaginatedResponse,
+    ScoreHistoryResponse, SystemSettingsSchema
 )
 from app.services.user_service import UserService
 from app.services.client_service import ClientService
@@ -194,6 +195,40 @@ async def get_client_scores(
 # SCORING
 # ═══════════════════════════════════════════════════════════════════════════════
 
+@router.get("/scoring/history", tags=["Scoring"])
+async def get_scoring_history(
+    skip: int = 0,
+    limit: int = 100,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    from sqlalchemy import text
+    
+    sql = text("""
+        SELECT 
+            sh.id, 
+            sh.client_id, 
+            c.nom_complet as client_name,
+            sh.agent_id, 
+            u.full_name as agent_name,
+            sh.score, 
+            sh.probabilite_defaut, 
+            sh.decision, 
+            sh.montant_recommande_gnf, 
+            sh.model_version, 
+            sh.created_at
+        FROM score_histories sh
+        LEFT JOIN clients c ON sh.client_id = c.id
+        LEFT JOIN users u ON sh.agent_id = u.id
+        ORDER BY sh.created_at DESC
+        LIMIT :limit OFFSET :skip
+    """)
+    
+    result = await db.execute(sql, {"limit": limit, "skip": skip})
+    rows = result.mappings().all()
+    return [dict(r) for r in rows]
+
+
 @router.post("/scoring", tags=["Scoring"])
 async def score_client(
     payload: ScoringRequest,
@@ -226,25 +261,45 @@ async def score_client(
 
     result = engine.score_client(client_data)
 
-    # Sauvegarde en DB si client enregistré
-    score_history_id = None
+    # --- Éviter la tautologie (doublons) dans l'historique ---
     if payload.client_id:
-        history = ScoreHistory(
-            client_id=payload.client_id,
-            agent_id=current_user.id,
-            score=result["score"],
-            probabilite_defaut=result["probabilite_defaut"],
-            decision=result["decision"],
-            montant_recommande_gnf=result["montant_recommande_gnf"],
-            shap_values={f["feature"]: f["impact"] for f in result["top_features"]},
-            model_version=result["model_version"],
-            model_name=result["model_name"],
-            input_snapshot=client_data,
-        )
-        db.add(history)
-        await db.flush()
-        score_history_id = history.id
+        from datetime import datetime
+        # Vérifier si un historique existe déjà pour ce client
+        existing_history_query = select(ScoreHistory).where(ScoreHistory.client_id == payload.client_id)
+        existing_history_res = await db.execute(existing_history_query)
+        existing_history = existing_history_res.scalar_one_or_none()
 
+        if existing_history:
+            # Mise à jour de l'historique existant
+            existing_history.score = result["score"]
+            existing_history.probabilite_defaut = result["probabilite_defaut"]
+            existing_history.decision = result["decision"]
+            existing_history.montant_recommande_gnf = result["montant_recommande_gnf"]
+            existing_history.shap_values = {f["feature"]: f["impact"] for f in result["top_features"]}
+            existing_history.created_at = datetime.utcnow()  # Correction: valeur Python, pas expression SQL
+            score_history_id = existing_history.id
+        else:
+            # Création d'un nouvel enregistrement si premier scoring
+            history = ScoreHistory(
+                client_id=payload.client_id,
+                agent_id=current_user.id if current_user else None,
+                score=result["score"],
+                probabilite_defaut=result["probabilite_defaut"],
+                decision=result["decision"],
+                montant_recommande_gnf=result["montant_recommande_gnf"],
+                model_version=result["model_version"],
+                model_name=result["model_name"],
+                input_snapshot=client_data,
+                shap_values={f["feature"]: f["impact"] for f in result["top_features"]},
+            )
+            db.add(history)
+            await db.flush()
+            score_history_id = history.id
+    else:
+        # Cas d'un scoring ad-hoc sans client_id (pas d'historique persistant)
+        score_history_id = None
+
+    await db.commit() # <--- AJOUT CRUCIAL ICI
     result["score_history_id"] = score_history_id
     return result
 
@@ -278,6 +333,11 @@ async def delete_user(
     await db.delete(user)
     await db.commit()
     return None
+
+
+@router.get("/settings", response_model=SystemSettingsSchema, tags=["Settings"])
+async def get_settings(current_user=Depends(require_admin)):
+    return SystemSettingsSchema()
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # DASHBOARD
