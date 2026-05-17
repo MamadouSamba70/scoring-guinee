@@ -14,7 +14,13 @@ import {
   Check,
   CheckCircle2,
   XCircle,
-  Zap
+  Zap,
+  ChevronRight,
+  User as UserIcon,
+  Smartphone,
+  Calendar,
+  Activity,
+  Users
 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import { toast } from 'react-hot-toast'
@@ -38,6 +44,7 @@ const clientSchema = z.object({
   nb_tx_diaspora_6mois: z.number().min(0),
   ratio_depense_revenu: z.number().min(0),
   solde_moyen_gnf: z.number().min(0),
+  defaut_passe: z.boolean().default(false),
   notes: z.string().optional(),
 })
 
@@ -64,6 +71,7 @@ const Clients = () => {
       nb_tx_diaspora_6mois: 0,
       ratio_depense_revenu: 0.4,
       solde_moyen_gnf: 500000,
+      defaut_passe: false,
     }
   })
 
@@ -108,178 +116,121 @@ const Clients = () => {
   const clients = clientsData?.items || []
 
   if (isLoading) {
-    return <div className="animate-pulse space-y-4">
-      <div className="h-10 w-48 bg-slate-200 rounded" />
-      <div className="h-64 bg-white rounded-xl" />
-    </div>
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+        <div className="w-12 h-12 border-4 border-white/5 border-t-guinee-green rounded-full animate-spin" />
+        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Initialisation du réseau...</p>
+      </div>
+    )
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-10 animate-reveal">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-display font-bold text-slate-900">Portefeuille Clients</h1>
-          <p className="text-slate-500">Gérez les micro-entrepreneurs enregistrés</p>
-        </div>
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="btn-primary gap-2"
-        >
-          <UserPlus className="w-5 h-5" />
-          Nouveau Client
-        </button>
-      </div>
-
-      <div className="card-premium p-0 overflow-hidden">
-        <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-            <input 
-              type="text" 
-              placeholder="Rechercher un nom, téléphone..." 
-              className="input-premium pl-10"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-2 h-2 bg-guinee-green rounded-full animate-pulse" />
+            <span className="text-xs font-bold text-slate-500 uppercase ">Base de Données Nationale</span>
           </div>
-          <button className="inline-flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 bg-white hover:bg-slate-50 transition-all">
-            <Filter className="w-4 h-4" />
-            Filtres
+          <h1 className="text-4xl font-bold text-white tracking-tight">Portefeuille <span className="text-guinee-green">Clients</span></h1>
+          <p className="text-slate-500 font-medium mt-1">Gestion et supervision des micro-entrepreneurs enregistrés.</p>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <div className="relative">
+             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+             <input 
+               type="text" 
+               placeholder="Rechercher..." 
+               className="pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-xs text-white placeholder-slate-600 w-64 focus:ring-2 focus:ring-guinee-green/50 outline-none transition-all"
+               value={searchTerm}
+               onChange={(e) => setSearchTerm(e.target.value)}
+             />
+          </div>
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 px-6 py-3 bg-white text-slate-950 text-xs font-bold rounded-xl hover:scale-105 active:scale-95 transition-all shadow-xl uppercase tracking-wider"
+          >
+            <Plus className="w-4 h-4" />
+            Ajouter
           </button>
         </div>
+      </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
+      {/* Table Container */}
+      <div className="dark-glass rounded-[2.5rem] border border-white/10 shadow-3xl overflow-hidden">
+        <div className="overflow-x-auto p-4">
+          <table className="table-premium">
             <thead>
-              <tr className="bg-slate-50/50 text-slate-500 text-xs uppercase tracking-wider">
-                <th className="px-6 py-4 font-semibold">Client</th>
-                <th className="px-6 py-4 font-semibold">Localisation</th>
-                <th className="px-6 py-4 font-semibold">Activité</th>
-                {user?.role === 'admin' && (
-                  <th className="px-6 py-4 font-semibold">Agent Créateur</th>
-                )}
-                <th className="px-6 py-4 font-semibold">Ancienneté</th>
-                <th className="px-6 py-4 font-semibold text-right">Actions</th>
+              <tr>
+                <th>Identité du Client</th>
+                <th>Localisation</th>
+                <th>Activité</th>
+                <th>Ancienneté</th>
+                <th className="text-right">Opérations</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody>
               {clients.map((client: any) => (
-                <tr key={client.id} className="hover:bg-slate-50 transition-colors group">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold">
+                <tr key={client.id} className="group">
+                  <td>
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center font-bold text-slate-400 group-hover:border-guinee-green/50 transition-all">
                         {client.nom_complet.charAt(0)}
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-slate-900">{client.nom_complet}</p>
-                        <p className="text-xs text-slate-500 flex items-center gap-1">
-                          <Phone className="w-3 h-3" />
+                        <p className="text-sm font-bold text-white tracking-tight">{client.nom_complet}</p>
+                        <p className="text-xs text-slate-500 font-bold flex items-center gap-1.5 uppercase tracking-wider mt-0.5">
+                          <Phone className="w-3 h-3 text-guinee-green" />
                           {client.telephone}
                         </p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-1.5 text-sm text-slate-600">
-                      <MapPin className="w-4 h-4 text-slate-400" />
-                      <span className="capitalize">{client.zone_geographique}</span>
+                  <td>
+                    <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wide">
+                      <MapPin className="w-4 h-4 text-slate-600" />
+                      {client.zone_geographique}
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-1.5 text-sm text-slate-600">
-                      <Briefcase className="w-4 h-4 text-slate-400" />
-                      <span className="capitalize">{client.type_activite}</span>
+                  <td>
+                    <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-white/5 rounded-lg border border-white/5 text-xs font-bold text-slate-300 uppercase tracking-wider">
+                      <Briefcase className="w-3 h-3 text-guinee-green" />
+                      {client.type_activite}
                     </div>
                   </td>
-                  {user?.role === 'admin' && (
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-600">
-                          {client.agent_name?.charAt(0) || 'A'}
-                        </div>
-                        <span className="text-xs font-semibold text-slate-600">{client.agent_name || 'Inconnu'}</span>
-                      </div>
-                    </td>
-                  )}
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <span className={clsx(
-                        "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider",
-                        client.status === 'valide' ? "bg-green-100 text-green-700" : 
-                        client.status === 'refuse' ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
-                      )}>
-                        {client.status?.replace('_', ' ')}
-                      </span>
-                      {user?.role === 'admin' && client.status === 'en_attente' && (
-                        <div className="flex gap-1 ml-2">
-                          <button 
-                            onClick={async () => {
-                              const res = await fetch(`/api/v1/clients/${client.id}`, {
-                                method: 'PATCH',
-                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                                body: JSON.stringify({ status: 'valide' })
-                              })
-                              if (res.ok) {
-                                queryClient.invalidateQueries({ queryKey: ['clients'] })
-                                toast.success('Dossier validé')
-                              }
-                            }}
-                            className="p-1 text-green-600 hover:bg-green-50 rounded"
-                            title="Valider"
-                          >
-                            <CheckCircle2 className="w-4 h-4" />
-                          </button>
-                          <button 
-                            onClick={async () => {
-                              const res = await fetch(`/api/v1/clients/${client.id}`, {
-                                method: 'PATCH',
-                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                                body: JSON.stringify({ status: 'refuse' })
-                              })
-                              if (res.ok) {
-                                queryClient.invalidateQueries({ queryKey: ['clients'] })
-                                toast.error('Dossier refusé')
-                              }
-                            }}
-                            className="p-1 text-red-600 hover:bg-red-50 rounded"
-                            title="Refuser"
-                          >
-                            <XCircle className="w-4 h-4" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                  <td>
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                       {client.anciennete_mobile_mois} MOIS
+                    </span>
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-2">
-                      <button 
-                        onClick={() => navigate('/app/scoring', { state: { client: client } })}
-                        className="p-2 text-indigo-400 hover:text-indigo-600 rounded-lg hover:bg-indigo-50 transition-all"
-                        title="Lancer le Scoring"
-                      >
-                        <Zap className="w-5 h-5" />
-                      </button>
-                      {token && user?.role === 'admin' && (
+                  <td className="text-right">
+                    <div className="flex justify-end gap-3">
+                      {user?.role === 'admin' && (
                         <button 
-                          onClick={async () => {
-                            if (window.confirm('Supprimer ce client ?')) {
-                              const res = await fetch(`/api/v1/clients/${client.id}`, {
-                                method: 'DELETE',
-                                headers: { 'Authorization': `Bearer ${token}` }
-                              })
-                              if (res.ok) {
-                                queryClient.invalidateQueries({ queryKey: ['clients'] })
-                                toast.success('Client supprimé')
-                              }
-                            }
-                          }}
-                          className="p-2 text-red-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-all"
+                          onClick={() => navigate('/app/scoring', { state: { client: client } })}
+                          className="w-10 h-10 bg-guinee-green/10 text-guinee-green hover:bg-guinee-green hover:text-white rounded-xl transition-all flex items-center justify-center shadow-lg"
                         >
-                          <X className="w-5 h-5" />
+                          <Zap className="w-5 h-5" />
                         </button>
                       )}
-                      <button className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-all">
-                        <MoreVertical className="w-5 h-5" />
+                      <button 
+                        onClick={async () => {
+                          if (window.confirm('Supprimer ce client ?')) {
+                            const res = await fetch(`/api/v1/clients/${client.id}`, {
+                              method: 'DELETE',
+                              headers: { 'Authorization': `Bearer ${token}` }
+                            })
+                            if (res.ok) {
+                              queryClient.invalidateQueries({ queryKey: ['clients'] })
+                              toast.success('Client supprimé')
+                            }
+                          }
+                        }}
+                        className="w-10 h-10 bg-red-400/10 text-red-400 hover:bg-red-400 hover:text-white rounded-xl transition-all flex items-center justify-center shadow-lg"
+                      >
+                        <X className="w-5 h-5" />
                       </button>
                     </div>
                   </td>
@@ -287,8 +238,13 @@ const Clients = () => {
               ))}
               {clients.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-slate-500 italic">
-                    Aucun client trouvé
+                  <td colSpan={5} className="py-20 text-center">
+                     <div className="flex flex-col items-center gap-4">
+                        <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center text-slate-600">
+                          <Users className="w-10 h-10" />
+                        </div>
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Aucun client enregistré dans le réseau.</p>
+                     </div>
                   </td>
                 </tr>
               )}
@@ -297,114 +253,134 @@ const Clients = () => {
         </div>
       </div>
 
-      {/* Modal Nouveau Client */}
+      {/* Modal Nouveau Client - Premium Redesign */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-slate-900">Enregistrer un nouveau client</h2>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                <X className="w-6 h-6 text-slate-400" />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-2xl bg-slate-950/40 animate-in fade-in duration-300">
+          <div className="dark-glass rounded-[3rem] shadow-4xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col border border-white/10 animate-in zoom-in-95 duration-300">
+            <div className="p-8 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+              <div>
+                <h2 className="text-2xl font-bold text-white tracking-tight uppercase">Nouveau Dossier</h2>
+                <p className="text-xs font-bold text-slate-500 uppercase mt-1">Enregistrement client certifié</p>
+              </div>
+              <button onClick={() => setIsModalOpen(false)} className="w-10 h-10 bg-white/5 hover:bg-red-400/10 hover:text-red-400 rounded-xl transition-all flex items-center justify-center text-slate-500">
+                <X className="w-6 h-6" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit((data) => createMutation.mutate(data))} className="flex-1 overflow-y-auto p-6 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="col-span-full font-semibold text-slate-400 text-xs uppercase tracking-widest border-b border-slate-100 pb-2">
-                  Informations Personnelles
+            <form onSubmit={handleSubmit((data) => createMutation.mutate(data))} className="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar">
+              {/* Section 1 */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 pb-2 border-b border-white/5">
+                   <UserIcon className="w-4 h-4 text-guinee-green" />
+                   <span className="text-xs font-bold text-white uppercase ">Identité & Profil</span>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Nom Complet</label>
-                  <input {...register('nom_complet')} className="input-premium" placeholder="Ex: Mamadou Diallo" />
-                  {errors.nom_complet && <p className="mt-1 text-xs text-red-500">{errors.nom_complet.message}</p>}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Téléphone Principal (Orange/MTN)</label>
-                  <input {...register('telephone')} className="input-premium" placeholder="Ex: 622 00 00 00" />
-                  {errors.telephone && <p className="mt-1 text-xs text-red-500">{errors.telephone.message}</p>}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Téléphone Secondaire (Optionnel)</label>
-                  <input {...register('telephone_secondaire')} className="input-premium" placeholder="Ex: 664 00 00 00" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Sexe</label>
-                  <select {...register('sexe')} className="input-premium">
-                    <option value="M">Homme</option>
-                    <option value="F">Femme</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Âge</label>
-                  <input type="number" {...register('age', { valueAsNumber: true })} className="input-premium" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Zone Géographique</label>
-                  <select {...register('zone_geographique')} className="input-premium">
-                    <option value="conakry">Conakry</option>
-                    <option value="kindia">Kindia</option>
-                    <option value="boke">Boké</option>
-                    <option value="labe">Labé</option>
-                    <option value="mamou">Mamou</option>
-                    <option value="faranah">Faranah</option>
-                    <option value="kankan">Kankan</option>
-                    <option value="nzerekore">Nzérékoré</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Type d'Activité</label>
-                  <select {...register('type_activite')} className="input-premium">
-                    <option value="commerce">Commerce</option>
-                    <option value="transport">Transport</option>
-                    <option value="artisanat">Artisanat</option>
-                    <option value="agriculture">Agriculture</option>
-                    <option value="services">Services</option>
-                  </select>
-                </div>
-
-                <div className="col-span-full font-semibold text-slate-400 text-xs uppercase tracking-widest border-b border-slate-100 pb-2 mt-4">
-                  Données Mobile Money (Orange/MTN)
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Ancienneté Mobile (mois)</label>
-                  <input type="number" {...register('anciennete_mobile_mois', { valueAsNumber: true })} className="input-premium" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Transactions Entrantes (30j)</label>
-                  <input type="number" {...register('nb_tx_entrees_30j', { valueAsNumber: true })} className="input-premium" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Revenu Moyen Mensuel (GNF)</label>
-                  <input type="number" {...register('montant_moyen_entree_gnf', { valueAsNumber: true })} className="input-premium" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Régularité Remboursements (0-1)</label>
-                  <input type="number" step="0.01" {...register('regularite_remboursements', { valueAsNumber: true })} className="input-premium" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Transactions Diaspora (6 mois)</label>
-                  <input type="number" {...register('nb_tx_diaspora_6mois', { valueAsNumber: true })} className="input-premium" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Solde Moyen Mobile (GNF)</label>
-                  <input type="number" {...register('solde_moyen_gnf', { valueAsNumber: true })} className="input-premium" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="group">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1 group-focus-within:text-white transition-colors">Nom Complet</label>
+                    <input {...register('nom_complet')} className="input-premium py-3.5" placeholder="Mamadou Diallo" />
+                    {errors.nom_complet && <p className="mt-1 text-xs font-bold text-red-500 uppercase tracking-wide">{errors.nom_complet.message}</p>}
+                  </div>
+                  <div className="group">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1 group-focus-within:text-white transition-colors">Téléphone Principal</label>
+                    <input {...register('telephone')} className="input-premium py-3.5" placeholder="622 00 00 00" />
+                    {errors.telephone && <p className="mt-1 text-xs font-bold text-red-500 uppercase tracking-wide">{errors.telephone.message}</p>}
+                  </div>
+                  <div className="group">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Genre</label>
+                    <select {...register('sexe')} className="input-premium py-3.5">
+                      <option value="M" className="bg-slate-900 text-white">Homme</option>
+                      <option value="F" className="bg-slate-900 text-white">Femme</option>
+                    </select>
+                  </div>
+                  <div className="group">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Âge Réel</label>
+                    <input type="number" {...register('age', { valueAsNumber: true })} className="input-premium py-3.5" />
+                  </div>
+                  <div className="group">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Zone Géographique</label>
+                    <select {...register('zone_geographique')} className="input-premium py-3.5">
+                      <option value="conakry" className="bg-slate-900 text-white">Conakry</option>
+                      <option value="kindia" className="bg-slate-900 text-white">Kindia</option>
+                      <option value="boke" className="bg-slate-900 text-white">Boké</option>
+                      <option value="labe" className="bg-slate-900 text-white">Labé</option>
+                      <option value="mamou" className="bg-slate-900 text-white">Mamou</option>
+                      <option value="faranah" className="bg-slate-900 text-white">Faranah</option>
+                      <option value="kankan" className="bg-slate-900 text-white">Kankan</option>
+                      <option value="nzerekore" className="bg-slate-900 text-white">Nzérékoré</option>
+                    </select>
+                  </div>
+                  <div className="group">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Secteur d'Activité</label>
+                    <select {...register('type_activite')} className="input-premium py-3.5">
+                      <option value="commerce" className="bg-slate-900 text-white">Commerce</option>
+                      <option value="transport" className="bg-slate-900 text-white">Transport</option>
+                      <option value="artisanat" className="bg-slate-900 text-white">Artisanat</option>
+                      <option value="agriculture" className="bg-slate-900 text-white">Agriculture</option>
+                      <option value="services" className="bg-slate-900 text-white">Services</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex gap-4 pt-4 border-t border-slate-100">
+              {/* Section 2 */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 pb-2 border-b border-white/5">
+                   <Smartphone className="w-4 h-4 text-guinee-yellow" />
+                   <span className="text-xs font-bold text-white uppercase ">Métriques Financières Mobile</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="group">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Ancienneté (mois)</label>
+                    <input type="number" {...register('anciennete_mobile_mois', { valueAsNumber: true })} className="input-premium py-3.5" />
+                  </div>
+                  <div className="group">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Flux Mensuel (GNF)</label>
+                    <input type="number" {...register('montant_moyen_entree_gnf', { valueAsNumber: true })} className="input-premium py-3.5" />
+                  </div>
+                  <div className="group">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Nb. Transactions (30j)</label>
+                    <input type="number" {...register('nb_tx_entrees_30j', { valueAsNumber: true })} className="input-premium py-3.5" />
+                  </div>
+                  <div className="group">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Solde Moyen (GNF)</label>
+                    <input type="number" {...register('solde_moyen_gnf', { valueAsNumber: true })} className="input-premium py-3.5" />
+                  </div>
+                  <div className="group">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Régularité Rembours. (0-1)</label>
+                    <input type="number" step="0.01" {...register('regularite_remboursements', { valueAsNumber: true })} className="input-premium py-3.5" />
+                  </div>
+                  <div className="group">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Ratio Dépense/Revenu</label>
+                    <input type="number" step="0.01" {...register('ratio_depense_revenu', { valueAsNumber: true })} className="input-premium py-3.5" />
+                  </div>
+                  <div className="group">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Tx Diaspora (6 mois)</label>
+                    <input type="number" {...register('nb_tx_diaspora_6mois', { valueAsNumber: true })} className="input-premium py-3.5" />
+                  </div>
+                  <div className="group flex flex-col justify-end">
+                    <label className="flex items-center gap-3 cursor-pointer py-3.5 px-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors">
+                      <input type="checkbox" {...register('defaut_passe')} className="w-5 h-5 rounded border-white/20 bg-slate-900 text-guinee-green focus:ring-guinee-green" />
+                      <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">Défaut de paiement passé</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer Modal */}
+              <div className="flex gap-4 pt-6 border-t border-white/5 pb-2">
                 <button 
                   type="button" 
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 px-4 py-2 border border-slate-200 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                  className="flex-1 px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-xs font-bold text-slate-400 uppercase hover:bg-white/10 transition-all"
                 >
                   Annuler
                 </button>
                 <button 
                   type="submit" 
                   disabled={createMutation.isPending}
-                  className="flex-1 btn-primary py-2"
+                  className="flex-1 px-6 py-4 bg-white text-slate-950 rounded-2xl text-xs font-bold uppercase hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl disabled:opacity-50"
                 >
-                  {createMutation.isPending ? 'Enregistrement...' : 'Enregistrer le client'}
+                  {createMutation.isPending ? 'En cours...' : 'Finaliser le Dossier'}
                 </button>
               </div>
             </form>

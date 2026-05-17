@@ -44,6 +44,7 @@ async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)):
         access_token=create_access_token(user.id, extra),
         refresh_token=create_refresh_token(user.id),
         expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        user=UserResponse.model_validate(user)
     )
 
 
@@ -129,12 +130,14 @@ async def list_clients(
     per_page: int = Query(20, ge=1, le=100),
     zone: Optional[str] = None,
     activite: Optional[str] = None,
+    status: Optional[str] = Query(None),
+    q: Optional[str] = Query(None),
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
     agent_filter = None if current_user.role == "admin" else current_user.id
     clients, total = await ClientService.list_paginated(
-        db, page=page, per_page=per_page, zone=zone, activite=activite, agent_id=agent_filter
+        db, page=page, per_page=per_page, zone=zone, activite=activite, agent_id=agent_filter, status=status, search=q
     )
     pages = (total + per_page - 1) // per_page
     return {
@@ -186,7 +189,7 @@ async def delete_client(
 async def get_client_scores(
     client_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_admin),
 ):
     return await ClientService.get_score_history(db, client_id)
 
@@ -200,7 +203,7 @@ async def get_scoring_history(
     skip: int = 0,
     limit: int = 100,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_admin),
 ):
     from sqlalchemy import text
     
@@ -229,11 +232,28 @@ async def get_scoring_history(
     return [dict(r) for r in rows]
 
 
+@router.delete("/scoring/history/{history_id}", tags=["Scoring"])
+async def delete_scoring_history(
+    history_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(require_admin),
+):
+    from app.models.models import ScoreHistory
+    from sqlalchemy import delete
+    
+    result = await db.execute(delete(ScoreHistory).where(ScoreHistory.id == history_id))
+    if result.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Entrée d'historique introuvable")
+    
+    await db.commit()
+    return {"message": "Entrée supprimée avec succès"}
+
+
 @router.post("/scoring", tags=["Scoring"])
 async def score_client(
     payload: ScoringRequest,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_admin),
 ):
     engine = get_ml_engine()
 
@@ -351,19 +371,39 @@ async def get_dashboard_stats(
     from sqlalchemy import select, func
     from app.models.models import Client, ScoreHistory, User
 
-    total_clients = await db.execute(select(func.count(Client.id)))
+    # Déterminer si on doit filtrer par agent
+    agent_id = None if current_user.role == "admin" else current_user.id
+
+    # Clients totaux (filtrés ou non)
+    query_clients = select(func.count(Client.id))
+    if agent_id:
+        query_clients = query_clients.where(Client.agent_id == agent_id)
+    total_clients = await db.execute(query_clients)
     total_clients = total_clients.scalar_one()
 
+    # Utilisateurs totaux (Admin seulement ou 1 pour l'agent)
     total_users = await db.execute(select(func.count(User.id)))
     total_users = total_users.scalar_one()
 
-    pending_count = await db.execute(select(func.count(Client.id)).where(Client.status == 'en_attente'))
+    # Clients en attente
+    query_pending = select(func.count(Client.id)).where(Client.status == 'en_attente')
+    if agent_id:
+        query_pending = query_pending.where(Client.agent_id == agent_id)
+    pending_count = await db.execute(query_pending)
     pending_count = pending_count.scalar_one()
 
-    total_scores = await db.execute(select(func.count(ScoreHistory.id)))
+    # Scores totaux
+    query_scores = select(func.count(ScoreHistory.id))
+    if agent_id:
+        query_scores = query_scores.where(ScoreHistory.agent_id == agent_id)
+    total_scores = await db.execute(query_scores)
     total_scores = total_scores.scalar_one()
 
-    avg_score = await db.execute(select(func.avg(ScoreHistory.score)))
+    # Score moyen
+    query_avg = select(func.avg(ScoreHistory.score))
+    if agent_id:
+        query_avg = query_avg.where(ScoreHistory.agent_id == agent_id)
+    avg_score = await db.execute(query_avg)
     avg_score = avg_score.scalar_one() or 0
 
     zone_stats = await ClientService.get_stats_by_zone(db)

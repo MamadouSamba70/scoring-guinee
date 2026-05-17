@@ -9,7 +9,11 @@ import {
   AlertTriangle,
   Info,
   TrendingUp,
-  TrendingDown
+  TrendingDown,
+  Activity,
+  ShieldCheck,
+  ChevronRight,
+  Database
 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import { toast } from 'react-hot-toast'
@@ -94,120 +98,134 @@ const Scoring = () => {
   }
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-display font-bold text-slate-900">Moteur de Scoring</h1>
-        <p className="text-slate-500">Évaluez la solvabilité d'un micro-entrepreneur</p>
+    <div className="space-y-10 animate-reveal pb-10">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-2 h-2 bg-guinee-green rounded-full animate-pulse" />
+            <span className="text-xs font-bold text-slate-500 uppercase ">Moteur d'Analyse Prédictive</span>
+          </div>
+          <h1 className="text-4xl font-bold text-white tracking-tight">Analyse de <span className="text-guinee-green">Solvabilité</span></h1>
+          <p className="text-slate-500 font-medium mt-1">Évaluation multidimensionnelle basée sur 12 variables comportementales.</p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-10 items-start">
         {/* Formulaire */}
-        <div className="card-premium">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="col-span-full pb-2 border-b border-slate-100 flex items-center gap-2 text-slate-400">
-                <Info className="w-4 h-4" />
-                <span className="text-xs font-semibold uppercase">Informations de base</span>
+        <div className="dark-glass rounded-[3rem] p-8 md:p-10 border border-white/10 shadow-3xl">
+          <form onSubmit={handleSubmit} className="space-y-10">
+            <div className="space-y-8">
+              <div className="flex items-center gap-3 pb-3 border-b border-white/5">
+                <Info className="w-4 h-4 text-slate-500" />
+                <span className="text-xs font-bold text-white uppercase ">Variables Socio-Démographiques</span>
               </div>
               
-              <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Âge</label>
-                <input type="number" name="age" value={formData.age} onChange={handleChange} className="input-premium" />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Sexe</label>
-                <select name="sexe" value={formData.sexe} onChange={handleChange} className="input-premium">
-                  <option value="M">Homme</option>
-                  <option value="F">Femme</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Activité</label>
-                <select name="type_activite" value={formData.type_activite} onChange={handleChange} className="input-premium">
-                  <option value="commerce">Commerce</option>
-                  <option value="transport">Transport</option>
-                  <option value="artisanat">Artisanat</option>
-                  <option value="agriculture">Agriculture</option>
-                  <option value="services">Services</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Zone Géo</label>
-                <select name="zone_geographique" value={formData.zone_geographique} onChange={handleChange} className="input-premium">
-                  <option value="conakry">Conakry</option>
-                  <option value="kindia">Kindia</option>
-                  <option value="boke">Boké</option>
-                  <option value="labe">Labé</option>
-                  <option value="kankan">Kankan</option>
-                  <option value="nzerekore">Nzérékoré</option>
-                </select>
-              </div>
-
-              <div className="col-span-full mt-4 pb-2 border-b border-slate-100 flex items-center gap-2 text-slate-400">
-                <Zap className="w-4 h-4 text-primary-500" />
-                <span className="text-xs font-semibold uppercase">Données Mobile Money</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="group">
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Âge</label>
+                  <input type="number" name="age" value={formData.age} onChange={handleChange} className="input-premium py-3" />
+                </div>
+                <div className="group">
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Genre</label>
+                  <select name="sexe" value={formData.sexe} onChange={handleChange} className="input-premium py-3">
+                    <option value="M">Homme</option>
+                    <option value="F">Femme</option>
+                  </select>
+                </div>
+                <div className="group">
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Secteur d'Activité</label>
+                  <select name="type_activite" value={formData.type_activite} onChange={handleChange} className="input-premium py-3">
+                    <option value="commerce">Commerce</option>
+                    <option value="transport">Transport</option>
+                    <option value="artisanat">Artisanat</option>
+                    <option value="agriculture">Agriculture</option>
+                    <option value="services">Services</option>
+                  </select>
+                </div>
+                <div className="group">
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Zone Géo</label>
+                  <select name="zone_geographique" value={formData.zone_geographique} onChange={handleChange} className="input-premium py-3">
+                    <option value="conakry">Conakry</option>
+                    <option value="kindia">Kindia</option>
+                    <option value="boke">Boké</option>
+                    <option value="labe">Labé</option>
+                    <option value="kankan">Kankan</option>
+                    <option value="nzerekore">Nzérékoré</option>
+                  </select>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Ancienneté (mois)</label>
-                <input type="number" name="anciennete_mobile_mois" value={formData.anciennete_mobile_mois} onChange={handleChange} className="input-premium" />
+              <div className="flex items-center gap-3 pb-3 border-b border-white/5 pt-4">
+                <Zap className="w-4 h-4 text-guinee-green" />
+                <span className="text-xs font-bold text-white uppercase ">Métriques Mobile Money</span>
               </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Tx entrées (30j)</label>
-                <input type="number" name="nb_tx_entrees_30j" value={formData.nb_tx_entrees_30j} onChange={handleChange} className="input-premium" />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Revenu moyen (GNF)</label>
-                <input type="number" name="montant_moyen_entree_gnf" value={formData.montant_moyen_entree_gnf} onChange={handleChange} className="input-premium" />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Régularité (0-1)</label>
-                <input type="number" step="0.01" name="regularite_remboursements" value={formData.regularite_remboursements} onChange={handleChange} className="input-premium" />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="group">
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Ancienneté (mois)</label>
+                  <input type="number" name="anciennete_mobile_mois" value={formData.anciennete_mobile_mois} onChange={handleChange} className="input-premium py-3" />
+                </div>
+                <div className="group">
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Fréquence Tx (30j)</label>
+                  <input type="number" name="nb_tx_entrees_30j" value={formData.nb_tx_entrees_30j} onChange={handleChange} className="input-premium py-3" />
+                </div>
+                <div className="group">
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Flux Moyen (GNF)</label>
+                  <input type="number" name="montant_moyen_entree_gnf" value={formData.montant_moyen_entree_gnf} onChange={handleChange} className="input-premium py-3" />
+                </div>
+                <div className="group">
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Régularité (0-1)</label>
+                  <input type="number" step="0.01" name="regularite_remboursements" value={formData.regularite_remboursements} onChange={handleChange} className="input-premium py-3" />
+                </div>
               </div>
             </div>
 
             <button
               type="submit"
               disabled={scoreMutation.isPending}
-              className="w-full btn-primary py-3 text-base"
+              className="w-full bg-white text-slate-950 py-5 rounded-2xl font-bold text-xs uppercase tracking-wider hover:scale-[1.02] active:scale-[0.98] transition-all shadow-2xl flex items-center justify-center group"
             >
-              {scoreMutation.isPending ? 'Analyse en cours...' : 'Calculer le score'}
-              <ArrowRight className="ml-2 w-5 h-5" />
+              {scoreMutation.isPending ? 'Analyse Neuronale en cours...' : 'Lancer le Scoring'}
+              <ArrowRight className="ml-3 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
           </form>
         </div>
 
         {/* Résultat */}
-        <div className="space-y-6">
+        <div className="space-y-8">
           {!result ? (
-            <div className="card-premium h-[500px] flex flex-col items-center justify-center text-center p-8 border-dashed border-2">
-              <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-                <Zap className="w-10 h-10 text-slate-300" />
+            <div className="dark-glass h-[600px] rounded-[3rem] flex flex-col items-center justify-center text-center p-12 border-dashed border-white/10 group">
+              <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mb-8 border border-white/5 group-hover:border-guinee-green/30 transition-all">
+                <Activity className="w-12 h-12 text-slate-700 group-hover:text-guinee-green transition-colors" />
               </div>
-              <h3 className="text-lg font-bold text-slate-900">Prêt pour l'analyse</h3>
-              <p className="text-slate-400 max-w-xs">Remplissez les informations du client à gauche pour générer un score de crédit prédictif.</p>
+              <h3 className="text-2xl font-bold text-white tracking-tight uppercase mb-4">Moteur en Veille</h3>
+              <p className="text-slate-500 font-medium max-w-xs leading-relaxed">Prêt pour l'analyse prédictive. Remplissez les paramètres client pour générer le score certifié.</p>
             </div>
           ) : (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="animate-reveal">
               <div className={clsx(
-                "card-premium overflow-hidden border-t-8",
-                result.decision === 'approuve' ? 'border-t-guinee-green' : 'border-t-guinee-red'
+                "dark-glass rounded-[3rem] p-10 md:p-12 border border-white/10 shadow-4xl relative overflow-hidden",
+                result.decision === 'approuve' ? 'after:content-[""] after:absolute after:top-0 after:left-0 after:w-full after:h-2 after:bg-guinee-green' : 'after:content-[""] after:absolute after:top-0 after:left-0 after:w-full after:h-2 after:bg-guinee-red'
               )}>
-                <div className="flex items-start justify-between mb-8">
+                <div className="flex items-start justify-between mb-10 pb-6 border-b border-white/5">
                   <div>
-                    <span className={clsx(
-                      "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider mb-2",
-                      result.decision === 'approuve' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    <div className={clsx(
+                      "inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider mb-4 border",
+                      result.decision === 'approuve' ? 'bg-guinee-green/10 text-guinee-green border-guinee-green/20' : 'bg-guinee-red/10 text-guinee-red border-guinee-red/20'
                     )}>
-                      {result.decision === 'approuve' ? <CheckCircle2 className="w-3 h-3 mr-1" /> : <XCircle className="w-3 h-3 mr-1" />}
-                      Crédit {result.decision === 'approuve' ? 'Approuvé' : 'Refusé'}
-                    </span>
-                    <h3 className="text-4xl font-display font-bold text-slate-900">{result.score.toFixed(1)}<span className="text-lg text-slate-400">/100</span></h3>
+                      {result.decision === 'approuve' ? <CheckCircle2 className="w-3 h-3 mr-2" /> : <XCircle className="w-3 h-3 mr-2" />}
+                      {result.decision === 'approuve' ? 'Crédit Approuvé' : 'Analyse Défavorable'}
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                       <span className="text-6xl font-bold text-white tracking-tight">{result.score.toFixed(1)}</span>
+                       <span className="text-lg font-bold text-slate-600">/100</span>
+                    </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs font-medium text-slate-500 uppercase">Risque</p>
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Classe de Risque</p>
                     <p className={clsx(
-                      "font-bold capitalize",
+                      "text-xl font-bold uppercase tracking-tight",
                       result.categorie_risque === 'faible' ? 'text-guinee-green' : 
                       result.categorie_risque === 'moyen' ? 'text-guinee-yellow' : 'text-guinee-red'
                     )}>
@@ -216,41 +234,48 @@ const Scoring = () => {
                   </div>
                 </div>
 
-                <div className="bg-slate-50 rounded-xl p-4 mb-8">
-                  <p className="text-sm text-slate-700 italic">"{result.interpretation}"</p>
+                <div className="bg-white/5 rounded-[2rem] p-8 border border-white/5 mb-10 italic text-slate-300 text-sm font-medium leading-relaxed">
+                  "{result.interpretation}"
                 </div>
 
-                <div className="space-y-4">
-                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Facteurs déterminants</h4>
+                <div className="space-y-6">
+                  <h4 className="text-xs font-bold text-slate-500 uppercase mb-4">Vecteurs d'Influence</h4>
                   {result.top_features.map((feature: any, i: number) => (
-                    <div key={i} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        {feature.direction === 'positif' ? 
-                          <TrendingUp className="w-4 h-4 text-guinee-green" /> : 
-                          <TrendingDown className="w-4 h-4 text-guinee-red" />
-                        }
-                        <span className="text-sm text-slate-600">{feature.label || feature.feature}</span>
-                      </div>
+                    <div key={i} className="flex items-center justify-between group">
                       <div className="flex items-center gap-4">
-                        <div className="w-24 bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                        <div className={clsx(
+                          "w-8 h-8 rounded-lg flex items-center justify-center transition-all",
+                          feature.direction === 'positif' ? 'bg-guinee-green/10 text-guinee-green' : 'bg-guinee-red/10 text-guinee-red'
+                        )}>
+                          {feature.direction === 'positif' ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                        </div>
+                        <span className="text-xs font-bold text-slate-300 uppercase tracking-wide">{feature.label || feature.feature}</span>
+                      </div>
+                      <div className="flex items-center gap-6">
+                        <div className="w-32 h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5">
                           <div 
                             className={clsx(
-                              "h-1.5 rounded-full",
-                              feature.direction === 'positif' ? 'bg-guinee-green' : 'bg-guinee-red'
+                              "h-full rounded-full transition-all duration-1000",
+                              feature.direction === 'positif' ? 'bg-guinee-green shadow-[0_0_8px_rgba(0,148,96,0.3)]' : 'bg-guinee-red shadow-[0_0_8px_rgba(206,17,38,0.3)]'
                             )} 
                             style={{ width: `${Math.min(feature.impact * 20, 100)}%` }} 
                           />
                         </div>
-                        <span className="text-xs font-mono text-slate-400">{feature.valeur}</span>
+                        <span className="text-xs font-bold text-slate-500 w-16 text-right tracking-wider">{feature.valeur}</span>
                       </div>
                     </div>
                   ))}
                 </div>
 
                 {result.decision === 'approuve' && result.montant_recommande_gnf && (
-                  <div className="mt-8 pt-6 border-t border-slate-100">
-                    <p className="text-xs text-slate-500 uppercase font-bold mb-1">Montant Recommandé</p>
-                    <p className="text-2xl font-bold text-guinee-green">{result.montant_recommande_gnf.toLocaleString()} GNF</p>
+                  <div className="mt-12 pt-8 border-t border-white/5 flex items-center justify-between">
+                    <div>
+                       <p className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">Capacité de Financement</p>
+                       <p className="text-3xl font-bold text-guinee-green tracking-tight">{result.montant_recommande_gnf.toLocaleString()} <span className="text-sm">GNF</span></p>
+                    </div>
+                    <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
+                       <ShieldCheck className="w-8 h-8 text-guinee-green" />
+                    </div>
                   </div>
                 )}
               </div>

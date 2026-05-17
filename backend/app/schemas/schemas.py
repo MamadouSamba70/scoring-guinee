@@ -49,11 +49,27 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class UserResponse(BaseModel):
+    id: int
+    email: Optional[EmailStr] = None
+    telephone: Optional[str] = None
+    full_name: str
+    role: UserRoleSchema
+    is_active: bool
+    institution: Optional[str] = None
+    client_id: Optional[int] = None
+    created_at: datetime
+    last_login: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True, protected_namespaces=())
+
+
 class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
     expires_in: int  # secondes
+    user: UserResponse
 
 
 class RefreshRequest(BaseModel):
@@ -87,19 +103,6 @@ class UserUpdate(BaseModel):
     role: Optional[UserRoleSchema] = None
 
 
-class UserResponse(BaseModel):
-    id: int
-    email: Optional[EmailStr] = None
-    telephone: Optional[str] = None
-    full_name: str
-    role: UserRoleSchema
-    is_active: bool
-    institution: Optional[str] = None
-    client_id: Optional[int] = None
-    created_at: datetime
-    last_login: Optional[datetime] = None
-
-    model_config = ConfigDict(from_attributes=True, protected_namespaces=())
 
 
 # ─── Client ───────────────────────────────────────────────────────────────────
@@ -149,6 +152,13 @@ class ClientCreate(BaseModel):
             raise ValueError("Le ratio dépense/revenu ne peut pas être négatif")
         return v
 
+    @field_validator("telephone_secondaire", mode="before")
+    @classmethod
+    def empty_string_to_none(cls, v: Any) -> Any:
+        if v == "":
+            return None
+        return v
+
 
 class ClientUpdate(BaseModel):
     nom_complet: Optional[str] = None
@@ -162,6 +172,14 @@ class ClientUpdate(BaseModel):
     nb_tx_diaspora_6mois: Optional[int] = None
     ratio_depense_revenu: Optional[float] = None
     solde_moyen_gnf: Optional[float] = None
+    telephone_secondaire: Optional[str] = None
+
+    @field_validator("telephone_secondaire", mode="before")
+    @classmethod
+    def empty_string_to_none(cls, v: Any) -> Any:
+        if v == "":
+            return None
+        return v
 
 
 class ClientResponse(BaseModel):
@@ -183,7 +201,7 @@ class ClientResponse(BaseModel):
     solde_moyen_gnf: float
     defaut_passe: bool
     notes: Optional[str]
-    agent_id: int
+    agent_id: Optional[int] = None
     agent_name: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime]

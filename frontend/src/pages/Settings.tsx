@@ -14,6 +14,7 @@ import {
   EyeOff,
   CheckCircle2,
   RefreshCw,
+  Server
 } from 'lucide-react'
 import { clsx } from 'clsx'
 
@@ -23,7 +24,7 @@ const Settings = () => {
   const token = useAuthStore(state => state.token)
   const user = useAuthStore(state => state.user)
 
-  const [activeSection, setActiveSection] = useState<Section>('scoring')
+  const [activeSection, setActiveSection] = useState<Section>(user?.role === 'admin' ? 'scoring' : 'password')
   const [isSaving, setIsSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
@@ -50,7 +51,7 @@ const Settings = () => {
     await new Promise(r => setTimeout(r, 800))
     setIsSaving(false)
     setSaved(true)
-    toast.success('Paramètres de scoring sauvegardés !')
+    toast.success('Paramètres du système sauvegardés !')
     setTimeout(() => setSaved(false), 3000)
   }
 
@@ -73,52 +74,59 @@ const Settings = () => {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       if (res.ok) {
-        toast.success('Mot de passe mis à jour avec succès !')
+        toast.success('Sécurité mise à jour avec succès !')
         setCurrentPassword('')
         setNewPassword('')
         setConfirmPassword('')
       }
     } catch {
-      toast.error('Erreur lors du changement de mot de passe.')
+      toast.error('Erreur lors de la mise à jour.')
     } finally {
       setIsSaving(false)
     }
   }
 
   const handleSaveNotifications = () => {
-    toast.success('Préférences de notifications enregistrées !')
+    toast.success('Règles de notifications appliquées !')
   }
 
-  const navItems: { key: Section; label: string; icon: React.ElementType }[] = [
-    { key: 'scoring', label: 'Moteur de Scoring', icon: Cpu },
-    { key: 'security', label: 'Sécurité & Rôles', icon: Shield },
-    { key: 'notifications', label: 'Notifications', icon: Bell },
-    { key: 'password', label: 'Mon Mot de passe', icon: Lock },
-  ]
+  const navItems: { key: Section; label: string; icon: React.ElementType; adminOnly?: boolean }[] = [
+    { key: 'scoring', label: 'Paramètres IA', icon: Cpu, adminOnly: true },
+    { key: 'security', label: 'Accès & Rôles', icon: Shield, adminOnly: true },
+    { key: 'notifications', label: 'Règles d\'Alerte', icon: Bell },
+    { key: 'password', label: 'Sécurité Personnelle', icon: Lock },
+  ].filter(item => !item.adminOnly || user?.role === 'admin') as any
 
   return (
-    <div className="space-y-8 pb-20">
-      <div>
-        <h1 className="text-2xl font-display font-bold text-slate-900">Paramètres du Système</h1>
-        <p className="text-slate-500">Configurez le moteur de scoring et gérez votre compte</p>
+    <div className="space-y-10 animate-reveal pb-20">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-2 h-2 bg-slate-400 rounded-full animate-pulse" />
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Centre de Configuration</span>
+          </div>
+          <h1 className="text-4xl font-bold text-white tracking-tight">Configuration <span className="text-slate-400">Système</span></h1>
+          <p className="text-slate-500 font-medium mt-1">Supervision de l'algorithme et paramètres du compte.</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
 
         {/* Nav Latérale */}
-        <div className="lg:col-span-1 space-y-1">
+        <div className="lg:col-span-1 space-y-2">
           {navItems.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
               onClick={() => setActiveSection(key)}
               className={clsx(
-                'w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all',
+                'w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all duration-300 border',
                 activeSection === key
-                  ? 'bg-slate-900 text-white shadow-sm'
-                  : 'text-slate-600 hover:bg-slate-100'
+                  ? 'bg-white/10 text-white border-white/10 shadow-[0_0_15px_rgba(255,255,255,0.05)]'
+                  : 'bg-transparent text-slate-500 border-transparent hover:bg-white/5 hover:text-white'
               )}
             >
-              <Icon className={clsx('w-5 h-5', activeSection === key ? 'text-white' : 'text-slate-400')} />
+              <Icon className={clsx('w-4 h-4', activeSection === key ? 'text-white' : 'text-slate-500')} />
               {label}
             </button>
           ))}
@@ -128,31 +136,35 @@ const Settings = () => {
         <div className="lg:col-span-3 space-y-6">
 
           {/* ─── Moteur de Scoring ─── */}
-          {activeSection === 'scoring' && (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
-              <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-primary-50 rounded-lg text-primary-600">
-                    <Cpu className="w-5 h-5" />
+          {activeSection === 'scoring' && user?.role === 'admin' && (
+            <div className="dark-glass rounded-[2.5rem] border border-white/10 shadow-3xl overflow-hidden animate-in fade-in duration-300">
+              <div className="p-8 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-xl text-white flex items-center justify-center">
+                    <Cpu className="w-6 h-6" />
                   </div>
-                  <h3 className="font-bold text-slate-900">Configuration de l'IA</h3>
+                  <div>
+                     <h3 className="text-xl font-bold text-white uppercase tracking-tight">Paramètres IA & Scoring</h3>
+                     <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mt-0.5">Moteur d'analyse prédictive</p>
+                  </div>
                 </div>
-                <span className="text-xs font-bold text-guinee-green bg-green-50 px-3 py-1 rounded-full border border-green-100">
-                  Modèle Actif
+                <span className="flex items-center gap-1.5 text-[10px] font-bold text-guinee-green bg-guinee-green/10 px-3 py-1.5 rounded-lg border border-guinee-green/20 uppercase tracking-widest">
+                  <span className="w-1.5 h-1.5 bg-guinee-green rounded-full animate-pulse" />
+                  Réseau Actif
                 </span>
               </div>
 
-              <div className="p-6 space-y-6">
+              <div className="p-8 space-y-10">
 
                 {/* Seuil d'approbation */}
                 <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <label className="text-sm font-semibold text-slate-700">Seuil d'Approbation (Score)</label>
+                  <div className="flex items-center justify-between mb-4">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Seuil de Tolérance au Risque</label>
                     <span className={clsx(
-                      'text-2xl font-bold tabular-nums',
-                      approvalThreshold >= 70 ? 'text-red-600' :
-                      approvalThreshold >= 50 ? 'text-primary-600' : 'text-guinee-green'
-                    )}>{approvalThreshold}%</span>
+                      'text-3xl font-bold tracking-tighter',
+                      approvalThreshold >= 70 ? 'text-guinee-red' :
+                      approvalThreshold >= 50 ? 'text-guinee-yellow' : 'text-guinee-green'
+                    )}>{approvalThreshold}<span className="text-lg text-slate-500 ml-1">%</span></span>
                   </div>
                   <input
                     type="range"
@@ -160,94 +172,96 @@ const Settings = () => {
                     max="100"
                     value={approvalThreshold}
                     onChange={e => setApprovalThreshold(Number(e.target.value))}
-                    className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-primary-600"
+                    className="w-full h-2 rounded-full appearance-none cursor-pointer bg-slate-800 accent-white"
                   />
-                  <div className="flex justify-between text-[10px] text-slate-400 mt-1">
-                    <span>0 — Très souple</span>
-                    <span>100 — Très strict</span>
+                  <div className="flex justify-between text-[10px] font-bold text-slate-600 uppercase tracking-wider mt-2">
+                    <span>0 — Souple</span>
+                    <span>100 — Strict</span>
                   </div>
-                  <p className="mt-2 text-xs text-slate-400 flex items-center gap-1">
-                    <Info className="w-3 h-3" />
-                    Les dossiers en dessous de ce seuil seront automatiquement rejetés.
-                  </p>
+                  <div className="mt-3 p-3 bg-white/5 rounded-xl border border-white/5 flex items-start gap-3">
+                    <Info className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                    <p className="text-xs font-medium text-slate-400">
+                      Les dossiers dont le score prédictif est inférieur à ce seuil recevront automatiquement un avis défavorable.
+                    </p>
+                  </div>
                 </div>
 
                 {/* Version du modèle */}
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Version du Modèle</label>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Modèle Prédictif Actif</label>
                   <select
                     value={modelVersion}
                     onChange={e => setModelVersion(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all cursor-pointer"
+                    className="input-premium py-3.5 w-full appearance-none"
                   >
-                    <option value="v1.0.2">v1.0.2 — Gradient Boosting (Production)</option>
-                    <option value="v1.0.3">v1.0.3 — Random Forest (Bêta)</option>
-                    <option value="v1.1.0">v1.1.0 — XGBoost Optimisé (Dev)</option>
+                    <option value="v1.0.2" className="bg-slate-900 text-white">v1.0.2 — Gradient Boosting (Production)</option>
+                    <option value="v1.0.3" className="bg-slate-900 text-white">v1.0.3 — Random Forest (Bêta)</option>
+                    <option value="v1.1.0" className="bg-slate-900 text-white">v1.1.0 — XGBoost Optimisé (Dev)</option>
                   </select>
                 </div>
 
                 {/* Plafond de crédit */}
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Plafond de Crédit Recommandé (GNF)</label>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Plafond de Financement Recommandé</label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500">
                       <CreditCard className="w-5 h-5" />
                     </div>
                     <input
                       type="number"
                       value={maxLoan}
                       onChange={e => setMaxLoan(e.target.value)}
-                      className="w-full pl-12 pr-16 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
+                      className="input-premium py-3.5 pl-12 pr-16 w-full font-bold text-white text-lg"
                     />
-                    <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-xs font-bold text-slate-400">GNF</div>
+                    <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-xs font-bold text-slate-500 uppercase">GNF</div>
                   </div>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Valeur affichée : {Number(maxLoan).toLocaleString('fr-FR')} GNF
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-2">
+                    Valeur formatée : {Number(maxLoan).toLocaleString('fr-FR')} GNF
                   </p>
                 </div>
 
                 {/* Mode Maintenance */}
                 <div className={clsx(
-                  'flex items-center justify-between p-4 rounded-xl border transition-all',
-                  maintenanceMode ? 'bg-red-50 border-red-200' : 'bg-slate-50 border-slate-200'
+                  'flex items-center justify-between p-5 rounded-2xl border transition-all',
+                  maintenanceMode ? 'bg-guinee-red/10 border-guinee-red/20' : 'bg-white/5 border-white/10'
                 )}>
-                  <div className="flex gap-3">
-                    <div className={clsx('p-2 rounded-lg shadow-sm h-fit', maintenanceMode ? 'bg-red-100 text-red-600' : 'bg-white text-slate-500')}>
-                      <Shield className="w-5 h-5" />
+                  <div className="flex gap-4">
+                    <div className={clsx('w-10 h-10 rounded-xl flex items-center justify-center border', maintenanceMode ? 'bg-guinee-red/20 text-guinee-red border-guinee-red/30' : 'bg-white/5 text-slate-500 border-white/5')}>
+                      <Server className="w-5 h-5" />
                     </div>
                     <div>
-                      <h4 className={clsx('text-sm font-bold', maintenanceMode ? 'text-red-900' : 'text-slate-900')}>
-                        Mode Maintenance {maintenanceMode && '— ACTIF'}
+                      <h4 className={clsx('text-sm font-bold uppercase tracking-wide', maintenanceMode ? 'text-guinee-red' : 'text-white')}>
+                        Coupure du Moteur
                       </h4>
-                      <p className={clsx('text-xs', maintenanceMode ? 'text-red-600' : 'text-slate-500')}>
-                        Désactiver le moteur de scoring pour tous les agents temporairement.
+                      <p className={clsx('text-xs font-medium mt-0.5', maintenanceMode ? 'text-guinee-red/70' : 'text-slate-500')}>
+                        Désactive l'API de scoring pour tous les agents du réseau.
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={() => setMaintenanceMode(!maintenanceMode)}
                     className={clsx(
-                      'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 cursor-pointer',
-                      maintenanceMode ? 'bg-red-600' : 'bg-slate-200'
+                      'relative inline-flex h-7 w-14 items-center rounded-full transition-colors duration-300 cursor-pointer border border-white/10',
+                      maintenanceMode ? 'bg-guinee-red' : 'bg-slate-800'
                     )}
                   >
                     <span className={clsx(
                       'inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300',
-                      maintenanceMode ? 'translate-x-5' : 'translate-x-1'
+                      maintenanceMode ? 'translate-x-8' : 'translate-x-1'
                     )} />
                   </button>
                 </div>
               </div>
 
-              <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+              <div className="p-6 bg-white/[0.02] border-t border-white/5 flex justify-end">
                 <button
                   onClick={handleSaveScoring}
                   disabled={isSaving}
                   className={clsx(
-                    'flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all',
+                    'flex items-center gap-2 px-8 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all shadow-xl',
                     saved
-                      ? 'bg-guinee-green text-white'
-                      : 'bg-slate-900 text-white hover:bg-slate-800'
+                      ? 'bg-guinee-green text-white scale-[0.98]'
+                      : 'bg-white text-slate-950 hover:bg-slate-200 active:scale-[0.98]'
                   )}
                 >
                   {isSaving ? (
@@ -257,66 +271,90 @@ const Settings = () => {
                   ) : (
                     <Save className="w-4 h-4" />
                   )}
-                  {isSaving ? 'Sauvegarde...' : saved ? 'Sauvegardé !' : 'Sauvegarder les réglages'}
+                  {isSaving ? 'Synchronisation...' : saved ? 'Données Synchronisées' : 'Appliquer la configuration'}
                 </button>
               </div>
             </div>
           )}
 
           {/* ─── Sécurité & Rôles ─── */}
-          {activeSection === 'security' && (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-slate-100 rounded-lg text-slate-600"><Shield className="w-5 h-5" /></div>
-                <h3 className="font-bold text-slate-900">Sécurité & Rôles</h3>
+          {activeSection === 'security' && user?.role === 'admin' && (
+            <div className="dark-glass rounded-[2.5rem] border border-white/10 shadow-3xl p-8 space-y-6 animate-in fade-in duration-300">
+              <div className="flex items-center gap-4 mb-2">
+                <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-xl text-white flex items-center justify-center">
+                   <Shield className="w-6 h-6" />
+                </div>
+                <div>
+                   <h3 className="text-xl font-bold text-white uppercase tracking-tight">Sécurité des Accès</h3>
+                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mt-0.5">Informations de votre session Master</p>
+                </div>
               </div>
-              <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl text-sm text-blue-700">
-                <p className="font-semibold mb-1">Compte Administrateur</p>
-                <p>Connecté en tant que : <span className="font-bold">{user?.full_name}</span></p>
-                <p>Email : <span className="font-bold">{user?.email}</span></p>
-                <p>Rôle : <span className="font-bold capitalize">{user?.role}</span></p>
+              
+              <div className="p-6 bg-white/5 border border-white/10 rounded-2xl space-y-4">
+                <div className="flex items-center justify-between pb-4 border-b border-white/5">
+                   <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Compte Opérateur</span>
+                   <span className="text-sm font-bold text-white">{user?.full_name}</span>
+                </div>
+                <div className="flex items-center justify-between pb-4 border-b border-white/5">
+                   <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Adresse Email</span>
+                   <span className="text-sm font-medium text-slate-300">{user?.email}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                   <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Niveau d'Accréditation</span>
+                   <span className="px-3 py-1 bg-white/10 border border-white/10 rounded-lg text-xs font-bold text-white uppercase tracking-widest">{user?.role}</span>
+                </div>
               </div>
-              <p className="text-sm text-slate-500">La gestion des rôles des agents se fait depuis la section <strong>Utilisateurs</strong>.</p>
+              <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-start gap-3">
+                 <Info className="w-4 h-4 text-blue-400 mt-0.5" />
+                 <p className="text-xs font-medium text-blue-300">
+                   Pour modifier les rôles et permissions des autres agents du réseau, veuillez vous rendre dans le module d'Accréditations (Utilisateurs).
+                 </p>
+              </div>
             </div>
           )}
 
           {/* ─── Notifications ─── */}
           {activeSection === 'notifications' && (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
-              <div className="p-6 border-b border-slate-100 flex items-center gap-3">
-                <div className="p-2 bg-slate-100 rounded-lg text-slate-600"><Bell className="w-5 h-5" /></div>
-                <h3 className="font-bold text-slate-900">Préférences de Notifications</h3>
+            <div className="dark-glass rounded-[2.5rem] border border-white/10 shadow-3xl overflow-hidden animate-in fade-in duration-300">
+              <div className="p-8 border-b border-white/5 flex items-center gap-4 bg-white/[0.02]">
+                <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-xl text-white flex items-center justify-center">
+                   <Bell className="w-6 h-6" />
+                </div>
+                <div>
+                   <h3 className="text-xl font-bold text-white uppercase tracking-tight">Règles d'Alerte</h3>
+                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mt-0.5">Configuration des envois automatiques</p>
+                </div>
               </div>
-              <div className="p-6 space-y-4">
+              <div className="p-8 space-y-4">
                 {[
-                  { label: 'Notifications par email', desc: 'Recevoir un résumé quotidien par email', value: notifEmail, set: setNotifEmail },
-                  { label: 'Nouveau client enregistré', desc: 'Alerte dès qu\'un agent ajoute un client', value: notifNewClient, set: setNotifNewClient },
-                  { label: 'Score calculé', desc: 'Notification après chaque calcul de score', value: notifScoringDone, set: setNotifScoringDone },
+                  { label: 'Rapport Analytique Quotidien', desc: 'Envoi par email du volume de transactions traité', value: notifEmail, set: setNotifEmail },
+                  { label: 'Alerte Nouvel Enrôlement', desc: 'Notification réseau lors de la création d\'un dossier', value: notifNewClient, set: setNotifNewClient },
+                  { label: 'Résultat de Scoring', desc: 'Alerte instantanée dès qu\'une décision IA est générée', value: notifScoringDone, set: setNotifScoringDone },
                 ].map(({ label, desc, value, set }) => (
-                  <div key={label} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
+                  <div key={label} className="flex items-center justify-between p-5 bg-white/5 rounded-2xl border border-white/5">
                     <div>
-                      <p className="text-sm font-semibold text-slate-900">{label}</p>
-                      <p className="text-xs text-slate-400">{desc}</p>
+                      <p className="text-sm font-bold text-white">{label}</p>
+                      <p className="text-xs font-medium text-slate-500 mt-1">{desc}</p>
                     </div>
                     <button
                       onClick={() => set(!value)}
                       className={clsx(
-                        'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 cursor-pointer',
-                        value ? 'bg-primary-600' : 'bg-slate-200'
+                        'relative inline-flex h-7 w-14 items-center rounded-full transition-colors duration-300 cursor-pointer border border-white/10',
+                        value ? 'bg-white' : 'bg-slate-800'
                       )}
                     >
                       <span className={clsx(
-                        'inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300',
-                        value ? 'translate-x-5' : 'translate-x-1'
+                        'inline-block h-5 w-5 transform rounded-full shadow-md transition-transform duration-300',
+                        value ? 'translate-x-8 bg-slate-900' : 'translate-x-1 bg-slate-500'
                       )} />
                     </button>
                   </div>
                 ))}
               </div>
-              <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
-                <button onClick={handleSaveNotifications} className="flex items-center gap-2 px-6 py-2.5 bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-slate-800 transition-all">
+              <div className="p-6 bg-white/[0.02] border-t border-white/5 flex justify-end">
+                <button onClick={handleSaveNotifications} className="flex items-center gap-2 px-8 py-3.5 bg-white text-slate-950 rounded-2xl text-xs font-bold uppercase tracking-wider shadow-xl hover:scale-[0.98] transition-all">
                   <Save className="w-4 h-4" />
-                  Enregistrer
+                  Mettre à jour les règles
                 </button>
               </div>
             </div>
@@ -324,79 +362,82 @@ const Settings = () => {
 
           {/* ─── Mot de passe ─── */}
           {activeSection === 'password' && (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
-              <div className="p-6 border-b border-slate-100 flex items-center gap-3">
-                <div className="p-2 bg-slate-100 rounded-lg text-slate-600"><Lock className="w-5 h-5" /></div>
-                <h3 className="font-bold text-slate-900">Changer mon Mot de passe</h3>
-              </div>
-              <div className="p-6 space-y-4">
-                {/* Mot de passe actuel */}
+            <div className="dark-glass rounded-[2.5rem] border border-white/10 shadow-3xl overflow-hidden animate-in fade-in duration-300">
+              <div className="p-8 border-b border-white/5 flex items-center gap-4 bg-white/[0.02]">
+                <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-xl text-white flex items-center justify-center">
+                   <Lock className="w-6 h-6" />
+                </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Mot de passe actuel</label>
+                   <h3 className="text-xl font-bold text-white uppercase tracking-tight">Protection du Compte</h3>
+                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mt-0.5">Mise à jour des identifiants</p>
+                </div>
+              </div>
+              <div className="p-8 space-y-6">
+                {/* Mot de passe actuel */}
+                <div className="group">
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">Clé de Sécurité Actuelle</label>
                   <div className="relative">
                     <input
                       type={showCurrentPw ? 'text' : 'password'}
                       value={currentPassword}
                       onChange={e => setCurrentPassword(e.target.value)}
-                      className="w-full px-4 pr-12 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
+                      className="input-premium py-3.5 pr-12 w-full"
                       placeholder="••••••••"
                     />
-                    <button type="button" onClick={() => setShowCurrentPw(!showCurrentPw)} className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400">
+                    <button type="button" onClick={() => setShowCurrentPw(!showCurrentPw)} className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-white transition-colors">
                       {showCurrentPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                 </div>
                 {/* Nouveau mot de passe */}
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Nouveau mot de passe</label>
+                <div className="group">
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">Nouvelle Clé</label>
                   <div className="relative">
                     <input
                       type={showNewPw ? 'text' : 'password'}
                       value={newPassword}
                       onChange={e => setNewPassword(e.target.value)}
-                      className="w-full px-4 pr-12 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
+                      className="input-premium py-3.5 pr-12 w-full"
                       placeholder="Minimum 8 caractères"
                     />
-                    <button type="button" onClick={() => setShowNewPw(!showNewPw)} className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400">
+                    <button type="button" onClick={() => setShowNewPw(!showNewPw)} className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-white transition-colors">
                       {showNewPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                   {newPassword.length > 0 && (
-                    <div className="mt-2 flex gap-1">
+                    <div className="mt-3 flex gap-2 px-1">
                       {[...Array(4)].map((_, i) => (
-                        <div key={i} className={clsx('h-1 flex-1 rounded-full', newPassword.length > i * 2 ? (newPassword.length < 6 ? 'bg-red-400' : newPassword.length < 10 ? 'bg-yellow-400' : 'bg-guinee-green') : 'bg-slate-200')} />
+                        <div key={i} className={clsx('h-1.5 flex-1 rounded-full transition-colors', newPassword.length > i * 2 ? (newPassword.length < 6 ? 'bg-guinee-red' : newPassword.length < 10 ? 'bg-guinee-yellow' : 'bg-guinee-green') : 'bg-white/10')} />
                       ))}
                     </div>
                   )}
                 </div>
                 {/* Confirmation */}
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Confirmer le nouveau mot de passe</label>
+                <div className="group">
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">Vérification</label>
                   <input
                     type="password"
                     value={confirmPassword}
                     onChange={e => setConfirmPassword(e.target.value)}
                     className={clsx(
-                      'w-full px-4 py-2.5 bg-slate-50 border rounded-xl text-sm focus:ring-2 transition-all',
-                      confirmPassword && newPassword !== confirmPassword
-                        ? 'border-red-400 focus:ring-red-500/20'
-                        : 'border-slate-200 focus:ring-primary-500/20 focus:border-primary-500'
+                      'input-premium py-3.5 w-full transition-all',
+                      confirmPassword && newPassword !== confirmPassword && 'border-guinee-red/50 focus:ring-guinee-red/20'
                     )}
                     placeholder="••••••••"
                   />
                   {confirmPassword && newPassword !== confirmPassword && (
-                    <p className="text-xs text-red-500 mt-1">Les mots de passe ne correspondent pas.</p>
+                    <p className="text-[10px] font-bold text-guinee-red uppercase tracking-wide mt-2 ml-1">Les clés ne correspondent pas</p>
                   )}
                 </div>
               </div>
-              <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+              <div className="p-6 bg-white/[0.02] border-t border-white/5 flex justify-end">
                 <button
                   onClick={handleSavePassword}
                   disabled={isSaving}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-slate-800 disabled:opacity-60 transition-all"
+                  className="flex items-center gap-2 px-8 py-3.5 bg-white text-slate-950 rounded-2xl text-xs font-bold uppercase tracking-wider shadow-xl hover:scale-[0.98] disabled:opacity-60 transition-all"
                 >
                   {isSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
-                  Mettre à jour le mot de passe
+                  {isSaving ? 'Validation...' : 'Mettre à jour la clé'}
                 </button>
               </div>
             </div>

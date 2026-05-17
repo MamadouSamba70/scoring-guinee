@@ -59,9 +59,11 @@ class ClientService:
         zone: Optional[str] = None,
         activite: Optional[str] = None,
         agent_id: Optional[int] = None,
+        status: Optional[str] = None,
+        search: Optional[str] = None,
     ) -> Tuple[List[dict], int]:
         from app.models.models import User
-        query = select(Client, User.full_name.label("agent_name")).join(User, Client.agent_id == User.id)
+        query = select(Client, User.full_name.label("agent_name")).outerjoin(User, Client.agent_id == User.id)
         
         filters = []
         if zone:
@@ -70,6 +72,21 @@ class ClientService:
             filters.append(Client.type_activite == activite)
         if agent_id:
             filters.append(Client.agent_id == agent_id)
+        if status:
+            from app.models.models import ClientStatus
+            try:
+                # Supporte à la fois l'objet Enum et sa valeur string
+                filters.append(Client.status == ClientStatus(status))
+            except ValueError:
+                filters.append(Client.status == status)
+        
+        if search:
+            from sqlalchemy import or_
+            filters.append(or_(
+                Client.nom_complet.ilike(f"%{search}%"),
+                Client.telephone.ilike(f"%{search}%")
+            ))
+
         if filters:
             query = query.where(and_(*filters))
 
